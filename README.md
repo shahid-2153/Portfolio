@@ -1,4 +1,4 @@
-![Logo](cp.png)
+![Logo](<img width="1912" height="980" alt="Portfolio" src="https://github.com/user-attachments/assets/1ef386af-9594-4b3c-83d6-6c3701ad8529" />)
 
 # Shahid Mushtaq Portfolio Showcase 💻
 
