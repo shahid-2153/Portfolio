@@ -10,7 +10,7 @@ It is fully **responsive**, interactive, and visually appealing across desktop, 
 
 ## Live Demo 🚀
 
-You can view the live website here: [Live Demo](shahidmushtaq.in)
+You can view the live website here: [Live Demo](https://shahidmushtaq.in/)
 
 ---
 
