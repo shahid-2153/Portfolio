@@ -1088,3 +1088,32 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
     flex: 0 1 130px;
   }
 }
+
+
+/* Consistent project-card typography and action alignment */
+.project-card h3 {
+  min-height: 2.7em;
+  line-height: 1.35;
+}
+.project-card p {
+  min-height: 4.5em;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+.project-card .skills {
+  min-height: 54px;
+}
+.project-card .btns {
+  min-height: 38px;
+}
+.project-card .demo-unavailable {
+  cursor: default;
+  opacity: .85;
+}
+.project-card .demo-unavailable:hover {
+  background: rgba(10, 132, 255, 0.18);
+}
