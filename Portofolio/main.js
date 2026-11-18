@@ -1,179 +1,87 @@
-const navLinks = document.querySelectorAll('.ul-list li a');
-const sections = document.querySelectorAll('section');
-
-const revealElements = document.querySelectorAll('.home-container, .about-container, .projects-container, .services-container, .contact-content');
-
-function removeActive() {
-  navLinks.forEach(link => link.parentElement.classList.remove('active'));
-}
-
-navLinks.forEach(link => {
-  link.addEventListener('click', e => {
-    e.preventDefault();
-    const targetId = link.getAttribute('href').substring(1);
-    const targetSection = document.getElementById(targetId);
-
-    window.scrollTo({
-      top: targetSection.offsetTop - 80, 
-      behavior: 'smooth'
+(() => {
+  "use strict";
+  const navLinks = document.querySelectorAll('.ul-list li a[href^="#"]');
+  const sections = document.querySelectorAll('main section[id]');
+  const revealElements = document.querySelectorAll('.home-container, .about-container, .projects-container, .services-container, .contact-content');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const scrollToTarget = (el) => {
+    if (!el) return;
+    window.scrollTo({top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - 80), behavior: reducedMotion ? 'auto' : 'smooth'});
+  };
+  navLinks.forEach(link => link.addEventListener('click', event => {
+    const target = document.getElementById(link.getAttribute('href').slice(1));
+    if (!target) return;
+    event.preventDefault();
+    scrollToTarget(target);
+    history.replaceState(null, '', link.getAttribute('href'));
+  }));
+  const backToTop = document.createElement('button');
+  backToTop.type = 'button';
+  backToTop.id = 'back-to-top';
+  backToTop.setAttribute('aria-label', 'Back to top');
+  backToTop.innerHTML = '<i class="fa-solid fa-chevron-up" aria-hidden="true"></i>';
+  document.body.appendChild(backToTop);
+  backToTop.addEventListener('click', () => window.scrollTo({top: 0, behavior: reducedMotion ? 'auto' : 'smooth'}));
+  let ticking = false;
+  const updateScroll = () => {
+    const marker = window.scrollY + 120;
+    let current = '';
+    sections.forEach(section => { if (marker >= section.offsetTop) current = section.id; });
+    navLinks.forEach(link => {
+      const active = link.getAttribute('href') === '#' + current;
+      link.parentElement.classList.toggle('active', active);
+      if (active) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
     });
-
-    removeActive();
-    link.parentElement.classList.add('active');
-  });
-});
-
-window.addEventListener('scroll', () => {
-  let scrollPos = window.scrollY + 100;
-
-  sections.forEach(section => {
-    if (scrollPos >= section.offsetTop && scrollPos < section.offsetTop + section.offsetHeight) {
-      removeActive();
-      const activeLink = document.querySelector(`.ul-list li a[href="#${section.id}"]`);
-      if (activeLink) activeLink.parentElement.classList.add('active');
-    }
-  });
-
-  if(window.scrollY > 500){
-    if (backToTop) backToTop.style.display = "flex";
-  } else {
-    if (backToTop) backToTop.style.display = "none";
+    backToTop.style.display = window.scrollY > 500 ? 'flex' : 'none';
+    ticking = false;
+  };
+  window.addEventListener('scroll', () => {
+    if (!ticking) { window.requestAnimationFrame(updateScroll); ticking = true; }
+  }, {passive: true});
+  if ('IntersectionObserver' in window && !reducedMotion) {
+    const observer = new IntersectionObserver((entries, obs) => entries.forEach(entry => {
+      if (entry.isIntersecting) { entry.target.classList.add('active-reveal'); obs.unobserve(entry.target); }
+    }), {threshold: 0.08});
+    revealElements.forEach(el => { el.classList.add('reveal'); observer.observe(el); });
+  } else revealElements.forEach(el => el.classList.add('active-reveal'));
+  const typingElement = document.querySelector('.info-home h3');
+  const words = ['Frontend Developer', 'UI/UX Designer', 'Web Enthusiast'];
+  if (typingElement && !reducedMotion) {
+    let wordIndex = 0, charIndex = 0, deleting = false;
+    const type = () => {
+      const word = words[wordIndex];
+      typingElement.textContent = word.slice(0, charIndex);
+      if (!deleting && charIndex < word.length) { charIndex++; setTimeout(type, 100); }
+      else if (deleting && charIndex > 0) { charIndex--; setTimeout(type, 50); }
+      else { deleting = !deleting; if (!deleting) wordIndex = (wordIndex + 1) % words.length; setTimeout(type, 900); }
+    };
+    setTimeout(type, 500);
   }
-
-  revealElements.forEach(el => {
-    const windowHeight = window.innerHeight;
-    const elementTop = el.getBoundingClientRect().top;
-    const revealPoint = 150;
-
-    if(elementTop < windowHeight - revealPoint){
-      el.classList.add('active-reveal');
-    }
-  });
-});
-
-revealElements.forEach(el => el.classList.add('reveal'));
-
-const backToTop = document.createElement('div');
-backToTop.innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
-backToTop.id = "back-to-top";
-document.body.appendChild(backToTop);
-
-backToTop.style.cssText = `
-  position: fixed;
-  bottom: 40px;
-  right: 40px;
-  background: #474af0;
-  color: white;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 1000;
-  transition: transform 0.3s ease;
-`;
-
-backToTop.addEventListener('click', () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-});
-
-backToTop.addEventListener('mouseover', () => backToTop.style.transform = 'scale(1.2)');
-backToTop.addEventListener('mouseout', () => backToTop.style.transform = 'scale(1)');
-
-const cards = document.querySelectorAll('.project-card, .c1, .service-card');
-cards.forEach(card => {
-  card.addEventListener('mouseenter', () => card.style.transform = 'translateY(-8px) scale(1.05)');
-  card.addEventListener('mouseleave', () => card.style.transform = 'translateY(0) scale(1)');
-});
-
-let typingElement;
-const words = ["Frontend Developer", "UI/UX Designer", "Web Enthusiast",];
-let wordIndex = 0;
-let charIndex = 0;
-let isDeleting = false;
-let typingSpeed = 100;
-
-function type() {
-    const currentWord = words[wordIndex];
-    let displayedText = currentWord.substring(0, charIndex);
-    
-    typingElement.innerHTML = displayedText + '<span class="cursor">|</span>';
-
-    if (!isDeleting && charIndex < currentWord.length) {
-        charIndex++;
-        setTimeout(type, typingSpeed);
-    } else if (isDeleting && charIndex > 0) {
-        charIndex--;
-        setTimeout(type, typingSpeed / 2);
-    } else {
-        isDeleting = !isDeleting;
-        if (!isDeleting) {
-            wordIndex = (wordIndex + 1) % words.length;
-        }
-        setTimeout(type, 1000);
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  typingElement = document.querySelector('.info-home h3');
-  if (typingElement) type();
-  const loadingText = document.getElementById("loading-text");
-  const mainIcon = document.querySelector(".main-icon");
-  const subIcons = document.querySelectorAll(".sub-icons i");
-  const designerText = document.getElementById("designer-text");
-  const mainPage = document.querySelector("#main-page");
-
-  setTimeout(() => {
-  if (loadingScreen) loadingScreen.style.opacity = "0";
-  setTimeout(() => {
-    if (loadingScreen) loadingScreen.style.display = "none";
-  }, 500);
-
-  if (mainPage) mainPage.classList.add("visible");
-}, 4000)
-  const loadingScreen = document.getElementById("loading-screen");
-
-  function showElement(element, delay=0){
-    setTimeout(() => {
-      element.classList.remove("hidden");
-      element.classList.add("fall");
-    }, delay);
+  const loadingScreen = document.getElementById('loading-screen');
+  if (loadingScreen) {
+    const items = [[document.getElementById('loading-text'),0],[document.querySelector('.main-icon'),150],...Array.from(document.querySelectorAll('.sub-icons i')).map((el,i)=>[el,300+i*120]),[document.getElementById('designer-text'),650]];
+    items.forEach(([el, delay]) => { if (el) setTimeout(() => { el.classList.remove('hidden'); if (!reducedMotion) el.classList.add('fall'); }, delay); });
+    setTimeout(() => { loadingScreen.style.opacity = '0'; setTimeout(() => { loadingScreen.hidden = true; }, 350); }, 1100);
   }
-
-  showElement(loadingText, 0);          
-  showElement(mainIcon, 800);         
-  subIcons.forEach((icon, idx) => {
-    showElement(icon, 1600 + idx*400);  
+  const form = document.getElementById('contact-form');
+  if (form) form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = form.querySelector('[type="submit"]');
+    if (!window.emailjs || typeof window.emailjs.sendForm !== 'function') {
+      alert('The contact service is temporarily unavailable. Please email shahidmushtaq2155@gmail.com directly.');
+      return;
+    }
+    button.disabled = true;
+    const original = button.textContent;
+    button.textContent = 'Sending...';
+    try {
+      await window.emailjs.sendForm('service_can1p4e', 'template_sn2cax3', form);
+      alert('Message sent successfully!');
+      form.reset();
+    } catch (error) {
+      console.error('EmailJS error:', error);
+      alert('Message could not be sent. Please email shahidmushtaq2155@gmail.com directly.');
+    } finally { button.disabled = false; button.textContent = original; }
   });
-  showElement(designerText, 2800);    
-
-  setTimeout(() => {
-    if (loadingScreen) loadingScreen.style.opacity = '0';
-    setTimeout(() => { if (loadingScreen) loadingScreen.style.display='none'; }, 500);
-    if (mainPage) mainPage.classList.add("visible");
-  }, 4000);
-});
-
-emailjs.init("wtqb0Krt20FHfFbtN");
-
-const contactForm = document.getElementById("contact-form");
-if (contactForm) {
-  contactForm.addEventListener("submit", function(e) {
-    e.preventDefault();
-
-    emailjs.sendForm("service_can1p4e", "template_sn2cax3", this)
-      .then(() => {
-        alert("Message sent ✅");
-        this.reset();
-      })
-      .catch((error) => {
-        console.error('EmailJS error:', error);
-        const errMsg = error && (error.text || error.status || error.message) ? (error.text || error.status || error.message) : 'Unknown error';
-        alert("Message failed ❌ — " + errMsg);
-      });
-  });
-} else {
-  console.warn('Contact form (#contact-form) not found in DOM.');
-}
+})();
