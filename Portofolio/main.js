@@ -60,9 +60,57 @@
   }
   const loadingScreen = document.getElementById('loading-screen');
   if (loadingScreen) {
-    const items = [[document.getElementById('loading-text'),0],[document.querySelector('.main-icon'),150],...Array.from(document.querySelectorAll('.sub-icons i')).map((el,i)=>[el,300+i*120]),[document.getElementById('designer-text'),650]];
-    items.forEach(([el, delay]) => { if (el) setTimeout(() => { el.classList.remove('hidden'); if (!reducedMotion) el.classList.add('fall'); }, delay); });
-    setTimeout(() => { loadingScreen.style.opacity = '0'; setTimeout(() => { loadingScreen.hidden = true; }, 350); }, 1100);
+    // Use the browser's network estimate when available; otherwise the page's
+    // actual load event naturally determines how long the intro remains visible.
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const effectiveType = connection?.effectiveType || '';
+    const downlink = Number(connection?.downlink) || 0;
+    const rtt = Number(connection?.rtt) || 0;
+    let minimumVisibleTime = 700;
+
+    if (connection?.saveData || effectiveType.includes('2g') || (downlink > 0 && downlink <= 0.7) || rtt >= 500) {
+      minimumVisibleTime = 1800;
+    } else if (effectiveType === '3g' || (downlink > 0 && downlink <= 2) || rtt >= 250) {
+      minimumVisibleTime = 1200;
+    } else if (effectiveType === '4g' || downlink > 5) {
+      minimumVisibleTime = 450;
+    }
+
+    const startedAt = performance.now();
+    const items = [
+      [document.getElementById('loading-text'), 0],
+      [document.querySelector('.main-icon'), 150],
+      ...Array.from(document.querySelectorAll('.sub-icons i')).map((el, i) => [el, 300 + i * 120]),
+      [document.getElementById('designer-text'), 650]
+    ];
+    const animationScale = minimumVisibleTime / 1100;
+    items.forEach(([el, delay]) => {
+      if (el) setTimeout(() => {
+        if (loadingScreen.hidden) return;
+        el.classList.remove('hidden');
+        if (!reducedMotion) el.classList.add('fall');
+      }, Math.round(delay * animationScale));
+    });
+
+    let finished = false;
+    const hideLoader = () => {
+      if (finished) return;
+      finished = true;
+      const remaining = Math.max(0, minimumVisibleTime - (performance.now() - startedAt));
+      setTimeout(() => {
+        loadingScreen.style.opacity = '0';
+        setTimeout(() => {
+          loadingScreen.hidden = true;
+          loadingScreen.style.display = 'none';
+        }, reducedMotion ? 0 : 350);
+      }, remaining);
+    };
+
+    // Wait for the page's assets to finish, with a safety timeout for stalled
+    // third-party resources so the visitor is never trapped on the intro.
+    if (document.readyState === 'complete') hideLoader();
+    else window.addEventListener('load', hideLoader, { once: true });
+    setTimeout(hideLoader, 6000);
   }
   const form = document.getElementById('contact-form');
   if (form) form.addEventListener('submit', async event => {
