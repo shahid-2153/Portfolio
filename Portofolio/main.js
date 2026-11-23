@@ -45,17 +45,38 @@
     }), {threshold: 0.08});
     revealElements.forEach(el => { el.classList.add('reveal'); observer.observe(el); });
   } else revealElements.forEach(el => el.classList.add('active-reveal'));
+  // Homepage typewriter: cycle through the original role descriptions.
   const typingElement = document.querySelector('.info-home h3');
   const words = ['Frontend Developer', 'UI/UX Designer', 'Web Enthusiast'];
-  if (typingElement && !reducedMotion) {
-    let wordIndex = 0, charIndex = 0, deleting = false;
+  if (typingElement) {
+    let wordIndex = 0;
+    let charIndex = 0;
+    let deleting = false;
+
     const type = () => {
-      const word = words[wordIndex];
-      typingElement.textContent = word.slice(0, charIndex);
-      if (!deleting && charIndex < word.length) { charIndex++; setTimeout(type, 100); }
-      else if (deleting && charIndex > 0) { charIndex--; setTimeout(type, 50); }
-      else { deleting = !deleting; if (!deleting) wordIndex = (wordIndex + 1) % words.length; setTimeout(type, 900); }
+      const currentWord = words[wordIndex];
+      const displayedText = currentWord.substring(0, charIndex);
+      typingElement.replaceChildren(document.createTextNode(displayedText));
+
+      const cursor = document.createElement('span');
+      cursor.className = 'cursor';
+      cursor.setAttribute('aria-hidden', 'true');
+      cursor.textContent = '|';
+      typingElement.appendChild(cursor);
+
+      if (!deleting && charIndex < currentWord.length) {
+        charIndex++;
+        setTimeout(type, 100);
+      } else if (deleting && charIndex > 0) {
+        charIndex--;
+        setTimeout(type, 50);
+      } else {
+        deleting = !deleting;
+        if (!deleting) wordIndex = (wordIndex + 1) % words.length;
+        setTimeout(type, 1000);
+      }
     };
+
     setTimeout(type, 500);
   }
   const loadingScreen = document.getElementById('loading-screen');
