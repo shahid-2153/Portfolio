@@ -1117,3 +1117,15 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .project-card .demo-unavailable:hover {
   background: rgba(10, 132, 255, 0.18);
 }
+
+
+/* Blinking cursor for the homepage role typewriter */
+.info-home h3 .cursor {
+  display: inline-block;
+  margin-left: 2px;
+  font-weight: 400;
+  animation: typewriter-cursor-blink 0.8s steps(2, start) infinite;
+}
+@keyframes typewriter-cursor-blink {
+  to { visibility: hidden; }
+}
